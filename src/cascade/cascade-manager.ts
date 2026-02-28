@@ -167,11 +167,11 @@ export class CascadeManager implements IDisposable {
     //
     // Two-layer architecture (VERIFIED 2026-02-28):
     //
-    // Layer 1 — HEADLESS LS API (RECOMMENDED):
-    //   Access: window.__xrayLS (from injected xray-inject.js in renderer)
-    //   Method: Preact VNode tree → component.props.lsClient → 148 LS methods
+    // Layer 1 -- HEADLESS LS API (RECOMMENDED):
+    //   Access: sdk.ls (LSBridge from antigravity-sdk)
+    //   Method: Preact VNode tree -> component.props.lsClient -> 148 LS methods
     //   Creates cascade WITHOUT opening panel or switching UI.
-    //   Usage:  await window.__xrayLS.createHeadless("prompt", 1018)
+    //   Usage:  await sdk.ls.createCascade({ text: 'prompt' })
     //
     // Layer 2 — COMMAND API (FALLBACK, this file):
     //   Access: vscode.commands.executeCommand (extension host)
@@ -185,8 +185,8 @@ export class CascadeManager implements IDisposable {
      * Create a new Cascade conversation via VS Code commands.
      *
      * ⚠️ **FALLBACK APPROACH** — causes UI flickering.
-     * For true headless creation, use `window.__xrayLS.createHeadless()`
-     * from integrated renderer scripts (see SDK integration module).
+     * For true headless creation, use `sdk.ls.createCascade()`
+     * from the SDK's LS bridge (see LSBridge module).
      *
      * VERIFIED 2026-02-28:
      * - `startNewConversation` ✅ creates new chat (but switches UI)
@@ -254,10 +254,10 @@ export class CascadeManager implements IDisposable {
      * Create a background Cascade conversation via commands.
      *
      * ⚠️ **FALLBACK** — Uses quick-switch approach (UI flickers briefly).
-     * For true headless background sessions, use the renderer-side API:
-     * ```javascript
-     * // From injected JS (xray-inject.js):
-     * const cascadeId = await window.__xrayLS.createHeadless("task", 1018);
+     * For true headless background sessions, use the SDK's LS bridge:
+     * ```typescript
+     * // Using LSBridge:
+     * const cascadeId = await sdk.ls.createCascade({ text: 'task', modelId: 1018 });
      * ```
      *
      * @param task - Initial task/prompt to send

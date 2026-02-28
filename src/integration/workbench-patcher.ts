@@ -17,7 +17,7 @@ const MARKER_START = '<!-- X-Ray SDK Integration -->';
 const MARKER_END = '<!-- /X-Ray SDK Integration -->';
 
 /** Default script filename */
-const SCRIPT_FILENAME = 'xray-sdk-integrate.js';
+const SCRIPT_FILENAME = 'ag-sdk-integrate.js';
 
 /**
  * Manages patching/unpatching of Antigravity's workbench.html.

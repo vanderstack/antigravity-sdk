@@ -333,7 +333,7 @@ export class IntegrationManager implements IIntegrationManager, IDisposable {
      * @example
      * ```typescript
      * const integrator = new IntegrationManager();
-     * integrator.useXRayPreset();
+     * integrator.useDemoPreset();
      * await integrator.install();
      * integrator.enableAutoRepair(); // Survive Antigravity updates
      * ```
@@ -410,11 +410,11 @@ export class IntegrationManager implements IIntegrationManager, IDisposable {
     // ─── Preset ────────────────────────────────────────────────────────
 
     /**
-     * Register the X-Ray preset — a complete demo of all 9 integration points.
+     * Register the Demo preset — a complete demo of all 9 integration points.
      * Useful for testing and as a reference implementation.
      */
-    useXRayPreset(): this {
-        this.addTopBarButton('xray_overview', '\u{1F4E1}', 'X-Ray: Session Overview', {
+    useDemoPreset(): this {
+        this.addTopBarButton('demo_overview', '\u{1F4E1}', 'SDK: Session Overview', {
             title: 'Session Overview',
             badge: { text: 'TOP_BAR', bgColor: 'rgba(79,195,247,.2)', textColor: '#4fc3f7' },
             rows: [
@@ -423,7 +423,7 @@ export class IntegrationManager implements IIntegrationManager, IDisposable {
             ],
         });
 
-        this.addTopRightButton('xray_perf', '\u26A1', 'X-Ray: Performance', {
+        this.addTopRightButton('demo_perf', '\u26A1', 'SDK: Performance', {
             title: 'Performance',
             badge: { text: 'TOP_RIGHT', bgColor: 'rgba(255,193,7,.2)', textColor: '#ffd54f' },
             rows: [
@@ -432,7 +432,7 @@ export class IntegrationManager implements IIntegrationManager, IDisposable {
             ],
         });
 
-        this.addInputButton('xray_stats', '\u{1F4CA}', 'X-Ray: Stats', {
+        this.addInputButton('demo_stats', '\u{1F4CA}', 'SDK: Stats', {
             title: 'Input Stats',
             badge: { text: 'INPUT_AREA', bgColor: 'rgba(76,175,80,.2)', textColor: '#81c784' },
             rows: [
@@ -441,7 +441,7 @@ export class IntegrationManager implements IIntegrationManager, IDisposable {
             ],
         });
 
-        this.addBottomIcon('xray_actions', '\u2630', 'X-Ray: Quick Actions', {
+        this.addBottomIcon('demo_actions', '\u2630', 'SDK: Quick Actions', {
             title: 'Quick Actions',
             badge: { text: 'BOTTOM_ICONS', bgColor: 'rgba(255,152,0,.2)', textColor: '#ffb74d' },
             rows: [
@@ -450,7 +450,7 @@ export class IntegrationManager implements IIntegrationManager, IDisposable {
             ],
         });
 
-        this.addTurnMetadata('xray_turns', [
+        this.addTurnMetadata('demo_turns', [
             'turnNumber',
             'userCharCount',
             'separator',
@@ -459,9 +459,9 @@ export class IntegrationManager implements IIntegrationManager, IDisposable {
             'thinkingIndicator',
         ]);
 
-        this.addUserBadges('xray_ubadge', 'charCount');
+        this.addUserBadges('demo_ubadge', 'charCount');
 
-        this.addBotAction('xray_inspect', '\u{1F50D}', 'inspect', {
+        this.addBotAction('demo_inspect', '\u{1F50D}', 'inspect', {
             title: 'Response Inspector',
             badge: { text: 'BOT_ACTION', bgColor: 'rgba(156,39,176,.2)', textColor: '#ce93d8' },
             rows: [
@@ -470,7 +470,7 @@ export class IntegrationManager implements IIntegrationManager, IDisposable {
             ],
         });
 
-        this.addDropdownItem('xray_menu_stats', 'X-Ray Stats', '\u{1F4CA}', {
+        this.addDropdownItem('demo_menu_stats', 'SDK Stats', '\u{1F4CA}', {
             title: 'Extended Stats',
             badge: { text: 'DROPDOWN', bgColor: 'rgba(233,30,99,.2)', textColor: '#f48fb1' },
             rows: [
@@ -479,7 +479,7 @@ export class IntegrationManager implements IIntegrationManager, IDisposable {
             ],
         }, true);
 
-        this.addDropdownItem('xray_menu_debug', 'X-Ray Debug', '\u{1F9EA}', {
+        this.addDropdownItem('demo_menu_debug', 'SDK Debug', '\u{1F9EA}', {
             title: 'Debug Info',
             badge: { text: 'DEBUG', bgColor: 'rgba(255,87,34,.2)', textColor: '#ff8a65' },
             rows: [
@@ -488,7 +488,7 @@ export class IntegrationManager implements IIntegrationManager, IDisposable {
             ],
         });
 
-        this.addTitleInteraction('xray_title', 'dblclick', 'dblclick', {
+        this.addTitleInteraction('demo_title', 'dblclick', 'dblclick', {
             title: 'Chat Title',
             badge: { text: 'TITLE', bgColor: 'rgba(0,150,136,.2)', textColor: '#80cbc4' },
             rows: [

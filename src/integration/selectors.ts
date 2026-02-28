@@ -45,12 +45,12 @@ export const Selectors = {
 } as const;
 
 /**
- * CSS class prefixes used by X-Ray integrations.
+ * CSS class prefixes used by SDK integrations.
  * Used to identify and clean up integrated elements.
  */
-export const XR_PREFIX = 'xr-';
+export const AG_PREFIX = 'ag-';
 
 /**
  * Data attribute used to mark processed elements.
  */
-export const XR_DATA_ATTR = 'data-xray';
+export const AG_DATA_ATTR = 'data-ag-sdk';
