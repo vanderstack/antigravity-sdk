@@ -171,11 +171,47 @@ export class StateBridge implements IDisposable {
         // Open with sql.js (pure JS — verified working in Extension Host)
         try {
             const initSqlJs = require('sql.js');
-            const wasmPath = require('path').join(__dirname, 'sql-wasm.wasm');
+            const path = require('path');
+            const fs = require('fs');
+
+            // Auto-locate sql-wasm.wasm — try multiple paths so devs
+            // don't need to manually copy anything after `npm install`
+            const candidates = [
+                // 1. Adjacent to this file (if wasm was bundled/copied)
+                path.join(__dirname, 'sql-wasm.wasm'),
+                // 2. sql.js package dist/ (standard npm install)
+                path.resolve(__dirname, '..', 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm'),
+                // 3. Hoisted node_modules (monorepo / npm workspaces)
+                path.resolve(__dirname, '..', '..', 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm'),
+                // 4. Walk up to find it (deep hoisting)
+                path.resolve(__dirname, '..', '..', '..', 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm'),
+                // 5. Resolve via require.resolve (most reliable)
+            ];
+
+            // Try require.resolve first — works in all layouts
+            try {
+                const sqlJsMain = require.resolve('sql.js');
+                candidates.unshift(path.join(path.dirname(sqlJsMain), 'sql-wasm.wasm'));
+            } catch {
+                // sql.js might not have a resolvable main in all setups
+            }
+
+            let wasmPath: string | null = null;
+            for (const p of candidates) {
+                if (fs.existsSync(p)) {
+                    wasmPath = p;
+                    break;
+                }
+            }
+
+            if (!wasmPath) {
+                throw new Error('sql-wasm.wasm not found in any expected location');
+            }
+
             const SQL = await initSqlJs({
-                locateFile: () => wasmPath,
+                locateFile: () => wasmPath!,
             });
-            const fileBuffer = require('fs').readFileSync(dbPath);
+            const fileBuffer = fs.readFileSync(dbPath);
             this._db = new SQL.Database(fileBuffer);
             log.info(`State database opened via sql.js: ${dbPath}`);
         } catch (error) {
