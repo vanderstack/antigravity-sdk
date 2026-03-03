@@ -170,14 +170,24 @@ export class StateBridge implements IDisposable {
 
         // Open with sql.js (pure JS — verified working in Extension Host)
         try {
-            const initSqlJs = require('sql.js');
             const path = require('path');
             const fs = require('fs');
+
+            // Try to load sql.js from multiple locations:
+            // 1. Adjacent sql-wasm.js (for VSIX bundles where consumer copies it to dist/)
+            // 2. Standard require('sql.js') (for npm install / dev setups)
+            let initSqlJs: any;
+            const localSqlJs = path.join(__dirname, 'sql-wasm.js');
+            if (fs.existsSync(localSqlJs)) {
+                initSqlJs = require(localSqlJs);
+            } else {
+                initSqlJs = require('sql.js');
+            }
 
             // Auto-locate sql-wasm.wasm — try multiple paths so devs
             // don't need to manually copy anything after `npm install`
             const candidates = [
-                // 1. Adjacent to this file (if wasm was bundled/copied)
+                // 1. Adjacent to this file (if wasm was bundled/copied to dist/)
                 path.join(__dirname, 'sql-wasm.wasm'),
                 // 2. sql.js package dist/ (standard npm install)
                 path.resolve(__dirname, '..', 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm'),
@@ -185,10 +195,9 @@ export class StateBridge implements IDisposable {
                 path.resolve(__dirname, '..', '..', 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm'),
                 // 4. Walk up to find it (deep hoisting)
                 path.resolve(__dirname, '..', '..', '..', 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm'),
-                // 5. Resolve via require.resolve (most reliable)
             ];
 
-            // Try require.resolve first — works in all layouts
+            // Try require.resolve — works in all layouts
             try {
                 const sqlJsMain = require.resolve('sql.js');
                 candidates.unshift(path.join(path.dirname(sqlJsMain), 'sql-wasm.wasm'));
@@ -318,18 +327,20 @@ export class StateBridge implements IDisposable {
      * Query using child_process sqlite3 CLI (fallback).
      */
     private async _queryChildProcess(key: string): Promise<string | null> {
-        const { execSync } = require('child_process');
+        const { exec } = require('child_process');
+        const { promisify } = require('util');
+        const execAsync = promisify(exec);
         const sql =
             key === '*'
                 ? "SELECT key FROM ItemTable WHERE key LIKE '%antigravity%' OR key LIKE '%jetskiStateSync%'"
                 : `SELECT value FROM ItemTable WHERE key = '${key.replace(/'/g, "''")}'`;
 
         try {
-            const result = execSync(`sqlite3 "${this._dbPath}" "${sql}"`, {
+            const { stdout } = await execAsync(`sqlite3 "${this._dbPath}" "${sql}"`, {
                 encoding: 'utf8',
                 timeout: 5000,
             });
-            return result.trim() || null;
+            return stdout.trim() || null;
         } catch {
             return null;
         }

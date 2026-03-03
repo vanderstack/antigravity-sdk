@@ -185,7 +185,11 @@ export class AntigravitySDK implements IDisposable {
      * Get the SDK version.
      */
     get version(): string {
-        return '1.5.0';
+        try {
+            return require('../package.json').version;
+        } catch {
+            return 'unknown';
+        }
     }
 
     /**

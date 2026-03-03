@@ -23,6 +23,7 @@ export class WorkbenchPatcher {
     private readonly _workbenchHtml: string;
     private readonly _scriptPath: string;
     private readonly _heartbeatPath: string;
+    private readonly _slug: string;
 
     private readonly _markerStart: string;
     private readonly _markerEnd: string;
@@ -49,11 +50,11 @@ export class WorkbenchPatcher {
         );
         this._workbenchHtml = path.join(this._workbenchDir, 'workbench.html');
 
-        const slug = namespace.replace(/[^a-zA-Z0-9-]/g, '-');
-        this._scriptPath = path.join(this._workbenchDir, `${FILE_PREFIX}-${slug}.js`);
-        this._heartbeatPath = path.join(this._workbenchDir, `${FILE_PREFIX}-${slug}-heartbeat`);
-        this._markerStart = `<!-- AG SDK [${slug}] -->`;
-        this._markerEnd = `<!-- /AG SDK [${slug}] -->`;
+        this._slug = namespace.replace(/[^a-zA-Z0-9-]/g, '-');
+        this._scriptPath = path.join(this._workbenchDir, `${FILE_PREFIX}-${this._slug}.js`);
+        this._heartbeatPath = path.join(this._workbenchDir, `${FILE_PREFIX}-${this._slug}-heartbeat`);
+        this._markerStart = `<!-- AG SDK [${this._slug}] -->`;
+        this._markerEnd = `<!-- /AG SDK [${this._slug}] -->`;
     }
 
     /**
@@ -94,6 +95,9 @@ export class WorkbenchPatcher {
             this.uninstall();
         }
 
+        // Clean up legacy files from previous versions (non-namespaced)
+        this._cleanupLegacyFiles();
+
         // Write the script file
         fs.writeFileSync(this._scriptPath, scriptContent, 'utf8');
 
@@ -110,6 +114,12 @@ export class WorkbenchPatcher {
 
         html = html.replace('</html>', `${scriptTag}\n</html>`);
         fs.writeFileSync(this._workbenchHtml, html, 'utf8');
+
+        // Create empty titles JSON if it doesn't exist (prevents console 404)
+        const titlesPath = path.join(this._workbenchDir, `ag-sdk-titles-${this._slug}.json`);
+        if (!fs.existsSync(titlesPath)) {
+            fs.writeFileSync(titlesPath, '{}', 'utf8');
+        }
     }
 
     /**
@@ -191,6 +201,54 @@ export class WorkbenchPatcher {
      */
     getScriptPath(): string {
         return this._scriptPath;
+    }
+
+    /**
+     * Clean up legacy files from previous SDK versions.
+     *
+     * Removes non-namespaced files (from before namespace support)
+     * and files with wrong namespace (e.g. 'undefined').
+     */
+    private _cleanupLegacyFiles(): void {
+        // Legacy file names that may exist from older versions
+        const legacyFiles = [
+            'ag-sdk-integrate.js',
+            'ag-sdk-heartbeat',
+            'ag-sdk-titles.json',
+            'ag-sdk-titles-undefined.json',
+            'ag-sdk-titles-default.json',
+        ];
+
+        for (const name of legacyFiles) {
+            const p = path.join(this._workbenchDir, name);
+            try {
+                if (fs.existsSync(p)) fs.unlinkSync(p);
+            } catch { /* ignore */ }
+        }
+
+        // Remove legacy script tags from workbench.html
+        try {
+            let html = fs.readFileSync(this._workbenchHtml, 'utf8');
+            let changed = false;
+
+            // Remove bare <script src="./ag-sdk-integrate.js"></script> lines
+            const legacyTagRegex = /<script src="\.\/ag-sdk-integrate\.js"><\/script>\n?/g;
+            if (legacyTagRegex.test(html)) {
+                html = html.replace(legacyTagRegex, '');
+                changed = true;
+            }
+
+            // Remove old X-Ray SDK markers with no namespace
+            const xrayRegex = /<!-- X-Ray SDK Integration -->\n?<script[^>]*ag-sdk-integrate[^>]*><\/script>\n?<!-- \/X-Ray SDK Integration -->\n?/g;
+            if (xrayRegex.test(html)) {
+                html = html.replace(xrayRegex, '');
+                changed = true;
+            }
+
+            if (changed) {
+                fs.writeFileSync(this._workbenchHtml, html, 'utf8');
+            }
+        } catch { /* ignore */ }
     }
 }
 

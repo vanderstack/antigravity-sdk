@@ -399,11 +399,10 @@ export class LSBridge {
      */
     private async _discoverFromProcess(): Promise<{ port: number; csrfToken: string; useTls: boolean } | null> {
         try {
-            const { execSync } = require('child_process');
             const platform = process.platform;
 
             // Phase 1: find LS process, extract PID, csrf_token, extension_server_port
-            let processInfo = await this._findLSProcess(execSync, platform);
+            let processInfo = await this._findLSProcess(platform);
             if (!processInfo) {
                 log.debug('No LS processes found');
                 return null;
@@ -412,7 +411,7 @@ export class LSBridge {
             log.debug(`LS process found: PID=${processInfo.pid}, csrf=present, ext_port=${processInfo.extPort}`);
 
             // Phase 2: find actual ConnectRPC port via netstat
-            const connectPort = await this._findConnectPort(execSync, platform, processInfo.pid, processInfo.extPort);
+            const connectPort = await this._findConnectPort(platform, processInfo.pid, processInfo.extPort);
             if (!connectPort) {
                 log.debug('Could not find ConnectRPC port via netstat, trying extension_server_port as fallback');
                 // Fallback: try extension_server_port with HTTP
@@ -438,24 +437,28 @@ export class LSBridge {
      * Phase 1: Find the LS process for this workspace.
      */
     private async _findLSProcess(
-        execSync: any,
         platform: string,
     ): Promise<{ pid: number; csrfToken: string; extPort: number } | null> {
+        const { exec } = require('child_process');
+        const { promisify } = require('util');
+        const execAsync = promisify(exec);
         let output: string;
 
         if (platform === 'win32') {
             // Use -EncodedCommand to avoid all PowerShell escaping issues with $_ and quotes
             const psScript = "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match 'language_server' -and $_.CommandLine -match 'csrf_token' } | ForEach-Object { $_.ProcessId.ToString() + '|' + $_.CommandLine }";
             const encoded = Buffer.from(psScript, 'utf16le').toString('base64');
-            output = execSync(
+            const result = await execAsync(
                 `powershell.exe -NoProfile -EncodedCommand ${encoded}`,
                 { encoding: 'utf8', timeout: 10000, windowsHide: true },
             );
+            output = result.stdout;
         } else {
-            output = execSync(
+            const result = await execAsync(
                 'ps -eo pid,args 2>/dev/null | grep language_server | grep csrf_token | grep -v grep',
                 { encoding: 'utf8', timeout: 5000 },
             );
+            output = result.stdout;
         }
 
         const lines = output.split('\n').filter((l: string) => l.trim().length > 0);
@@ -504,24 +507,28 @@ export class LSBridge {
      * then try HTTPS first (preferred), fall back to HTTP.
      */
     private async _findConnectPort(
-        execSync: any,
         platform: string,
         pid: number,
         extPort: number,
     ): Promise<{ port: number; tls: boolean } | null> {
         try {
+            const { exec } = require('child_process');
+            const { promisify } = require('util');
+            const execAsync = promisify(exec);
             let output: string;
 
             if (platform === 'win32') {
-                output = execSync(
+                const result = await execAsync(
                     `netstat -aon | findstr "LISTENING" | findstr "${pid}"`,
                     { encoding: 'utf8', timeout: 5000, windowsHide: true },
                 );
+                output = result.stdout;
             } else {
-                output = execSync(
+                const result = await execAsync(
                     `ss -tlnp 2>/dev/null | grep "pid=${pid}" || netstat -tlnp 2>/dev/null | grep "${pid}"`,
                     { encoding: 'utf8', timeout: 5000 },
                 );
+                output = result.stdout;
             }
 
             // Extract all listening ports for this PID
