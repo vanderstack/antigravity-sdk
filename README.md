@@ -332,7 +332,7 @@ This is a community project. PRs welcome!
 
 ---
 
-## Support
+## ❤️ Support
 
 If you find this project useful and want to support its development, you can send **USDT** to:
 
