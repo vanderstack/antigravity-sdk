@@ -59,12 +59,14 @@ export {
     SessionNotFoundError,
 } from './core/errors';
 export { Logger, LogLevel } from './core/logger';
+export { findWorkbenchDir, findAntigravityInstallDir, findBundleDir } from './core/path-utils';
 
 // Transport
 export { CommandBridge, AntigravityCommands } from './transport/command-bridge';
 export { StateBridge, USSKeys } from './transport/state-bridge';
 export { EventMonitor, type IStateChange, type IStepCountChange, type IActiveSessionChange } from './transport/event-monitor';
 export { LSBridge, Models, type ModelId, type IHeadlessCascadeOptions, type ISendMessageOptions, type IConversationAnnotations } from './transport/ls-bridge';
+export { ProtobufDecoder } from './transport/user-status-decoder';
 
 // Cascade
 export { CascadeManager } from './cascade/cascade-manager';

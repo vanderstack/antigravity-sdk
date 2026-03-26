@@ -11,6 +11,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { findWorkbenchDir } from '../core/path-utils';
 
 /** Default prefix for generated files */
 const FILE_PREFIX = 'ag-sdk';
@@ -35,19 +36,7 @@ export class WorkbenchPatcher {
      */
     constructor(namespace: string = 'default') {
         // Resolve Antigravity install path
-        const appData = process.env.LOCALAPPDATA || '';
-        this._workbenchDir = path.join(
-            appData,
-            'Programs',
-            'Antigravity',
-            'resources',
-            'app',
-            'out',
-            'vs',
-            'code',
-            'electron-browser',
-            'workbench',
-        );
+        this._workbenchDir = findWorkbenchDir() || '';
         this._workbenchHtml = path.join(this._workbenchDir, 'workbench.html');
 
         this._slug = namespace.replace(/[^a-zA-Z0-9-]/g, '-');

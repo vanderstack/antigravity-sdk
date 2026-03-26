@@ -27,7 +27,6 @@ The SDK interacts with Antigravity exclusively through:
   proprietary algorithms.
 - This SDK **does not bypass** security features, licensing, rate limits,
   or usage restrictions.
-- This SDK **does not proxy** or relay requests to Google's infrastructure.
 - All communication goes through Antigravity's own extension host — the same
   mechanism used by any VS Code extension.
 
@@ -50,13 +49,6 @@ any VS Code extension running inside Antigravity.
 Users and extension developers are responsible for ensuring their use of
 this SDK and any extensions built with it comply with applicable terms of
 service and local laws.
-
-Extension developers should:
-
-1. Not use the SDK to access Google's backend directly
-2. Not use the SDK to extract or replicate AI model behavior
-3. Not use the SDK to bypass security or licensing restrictions
-4. Follow Antigravity's extension guidelines where applicable
 
 ## Takedown
 

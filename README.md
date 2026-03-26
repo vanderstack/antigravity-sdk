@@ -18,9 +18,6 @@
 
 A TypeScript SDK for building **VS Code extensions** that extend Antigravity IDE. It gives you programmatic access to the agent's conversations, preferences, step control, real-time activity monitoring, and a declarative API for integrating custom UI directly into the Agent View — all through Antigravity's own extension protocols.
 
-> [!IMPORTANT]
-> This SDK is designed **exclusively** for building Antigravity extensions. It is **not** a tool for integrating Antigravity with third-party applications, extracting data, or proxying requests. See [Compliance](#compliance).
-
 ---
 
 ## Quick Start
@@ -268,32 +265,7 @@ Your Extension
 
 ---
 
-## Compliance
-
-> [!CAUTION]
-> **Token extraction is a violation of Google's Terms of Service.**
->
-> The SDK **actively blocks** access to authentication tokens (`oauthToken`, `agentManagerInitState`, and other sensitive keys). Any attempt to read these keys will throw an error.
->
-> Extracting, storing, forwarding, or reusing Antigravity OAuth tokens — directly or through third-party tools — violates Google's TOS and may result in account termination.
-
-### What this SDK is for
-
-- Building **VS Code extensions** that run inside Antigravity IDE
-- Extending Antigravity's functionality for your own workflows
-- Adding custom UI elements to the Agent View
-- Monitoring and automating agent step approval
-- Reading preferences and conversation metadata
-
-### What this SDK is NOT for
-
-- Integrating Antigravity with external applications or services
-- Proxying or relaying requests to Google's infrastructure
-- Extracting AI model outputs for training other models
-- Accessing Google's backend servers, gRPC endpoints, or auth systems
-- Building alternative clients or wrappers around Antigravity
-
-### How it works
+## How it works
 
 All SDK communication goes through three safe, local channels:
 
@@ -308,7 +280,7 @@ The SDK includes a `SENSITIVE_KEYS` blocklist that prevents extension developers
 ## Documentation
 
 - **[GEMINI.md](GEMINI.md)** — Full internal architecture docs, verified DOM selectors, protobuf schemas
-- **[LEGAL.md](LEGAL.md)** — Legal notice, interoperability rights, compliance details
+- **[LEGAL.md](LEGAL.md)** — Legal notice, interoperability rights
 - **[API Reference](https://kanezal.github.io/antigravity-sdk)** — TypeDoc (coming soon)
 
 ---

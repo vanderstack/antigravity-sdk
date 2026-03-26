@@ -30,6 +30,7 @@ export enum LogLevel {
  */
 export class Logger {
     private static _globalLevel: LogLevel = LogLevel.Warn;
+    private static _logHandler: ((level: LogLevel, prefix: string, message: string, args: unknown[]) => void) | null = null;
 
     /**
      * Set the global log level for all SDK loggers.
@@ -38,6 +39,15 @@ export class Logger {
      */
     static setLevel(level: LogLevel): void {
         Logger._globalLevel = level;
+    }
+
+    /**
+     * Set a custom log handler to redirect SDK logs.
+     * 
+     * @param handler - Function to handle log messages
+     */
+    static setLogHandler(handler: (level: LogLevel, prefix: string, message: string, args: unknown[]) => void): void {
+        Logger._logHandler = handler;
     }
 
     /**
@@ -73,6 +83,12 @@ export class Logger {
         }
 
         const prefix = `[AntigravitySDK:${this.module}]`;
+
+        if (Logger._logHandler) {
+            Logger._logHandler(level, prefix, message, args);
+            return;
+        }
+
         const fn =
             level === LogLevel.Error ? console.error
                 : level === LogLevel.Warn ? console.warn

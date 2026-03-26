@@ -35,6 +35,7 @@
  */
 
 import * as fs from 'fs';
+import * as path from 'path';
 import { IDisposable } from '../core/disposable';
 import { Logger } from '../core/logger';
 import {
@@ -534,7 +535,7 @@ export class IntegrationManager implements IIntegrationManager, IDisposable {
     enableAutoRepair(): void {
         if (this._watcher) return;
 
-        const htmlPath = this._patcher.getWorkbenchDir() + '\\workbench.html';
+        const htmlPath = path.join(this._patcher.getWorkbenchDir(), 'workbench.html');
         if (!fs.existsSync(htmlPath)) {
             log.warn('Cannot enable auto-repair — workbench.html not found');
             return;

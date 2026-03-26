@@ -17,6 +17,8 @@
  * @module transport/ls-bridge
  */
 
+import * as http from 'http';
+import * as https from 'https';
 import { Logger } from '../core/logger';
 
 const log = new Logger('LSBridge');
@@ -189,6 +191,7 @@ export class LSBridge {
         this._ensureReady();
 
         // Step 1: StartCascade
+        log.info(`Creating cascade (StartCascade)...`);
         const startResp = await this._rpc('StartCascade', { source: 0 });
         const cascadeId = startResp?.cascadeId;
         if (!cascadeId) {
@@ -357,17 +360,15 @@ export class LSBridge {
         model?: ModelId,
         plannerType?: string,
     ): Promise<void> {
+        const plannerValue = plannerType || 'conversational';
         const payload: any = {
             cascadeId,
-            items: [{ chunk: { case: 'text', value: text } }],
+            items: [{ text: text }],
             cascadeConfig: {
                 plannerConfig: {
-                    plannerTypeConfig: {
-                        case: plannerType || 'conversational',
-                        value: {},
-                    },
+                    [plannerValue]: {},
                     requestedModel: {
-                        choice: { case: 'model', value: model || Models.GEMINI_FLASH },
+                        model: model || Models.GEMINI_FLASH,
                     },
                 },
             },
@@ -676,9 +677,11 @@ export class LSBridge {
      * - Main LS port (--random_port) uses HTTPS with self-signed cert
      */
     private async _rpc(method: string, payload: any): Promise<any> {
-        const httpModule = this._useTls ? require('https') : require('http');
         const protocol = this._useTls ? 'https' : 'http';
         const url = `${protocol}://127.0.0.1:${this._port}/exa.language_server_pb.LanguageServerService/${method}`;
+        log.info(`RPC Call: ${method} -> ${url}`);
+
+        const httpModule: any = this._useTls ? https : http;
 
         return new Promise((resolve, reject) => {
             const body = JSON.stringify(payload);
@@ -702,22 +705,44 @@ export class LSBridge {
                 reqOptions.rejectUnauthorized = false;
             }
 
+            reqOptions.timeout = 30000; // 30 second timeout
+
             const req = httpModule.request(url, reqOptions, (res: any) => {
                 let data = '';
                 res.on('data', (chunk: string) => { data += chunk; });
                 res.on('end', () => {
                     if (res.statusCode === 200) {
-                        try { resolve(JSON.parse(data)); }
-                        catch { resolve(data); }
+                        try { 
+                            const parsed = JSON.parse(data);
+                            log.info(`RPC Success: ${method}`);
+                            resolve(parsed); 
+                        }
+                        catch { 
+                            log.info(`RPC Success (raw): ${method}`);
+                            resolve(data); 
+                        }
                     } else {
                         const hint = res.statusCode === 401
                             ? ' (CSRF token may be invalid or missing -- try setConnection() with the correct token)'
                             : '';
-                        reject(new Error(`LS ${method}: ${res.statusCode} -- ${data.substring(0, 200)}${hint}`));
+                        const errorMsg = `LS ${method}: ${res.statusCode} -- ${data.substring(0, 200)}${hint}`;
+                        log.error(errorMsg);
+                        reject(new Error(errorMsg));
                     }
                 });
             });
-            req.on('error', (err: Error) => reject(err));
+
+            req.on('timeout', () => {
+                req.destroy();
+                const errorMsg = `LS ${method}: Request timed out after 30s`;
+                log.error(errorMsg);
+                reject(new Error(errorMsg));
+            });
+
+            req.on('error', (err: Error) => {
+                log.error(`LS ${method} socket error: ${err.message}`);
+                reject(err);
+            });
             req.write(body);
             req.end();
         });
